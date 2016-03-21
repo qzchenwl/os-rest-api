@@ -23,3 +23,7 @@ executable os-rest-api
                      , directory
                      , filepath
                      , mtl
+                     , bytestring
+                     , unordered-containers
+                     , aeson
+                     , time
