@@ -27,3 +27,4 @@ executable os-rest-api
                      , unordered-containers
                      , aeson
                      , time
+                     , process

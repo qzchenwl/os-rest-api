@@ -2,20 +2,24 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Main where
 
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy.Char8 as LB
+
+import Blaze.ByteString.Builder.Char.Utf8 (fromChar)
+import Control.Monad (unless)
+import Control.Monad.Trans (lift)
+import Data.Aeson (ToJSON, decode)
+import Data.HashMap.Strict (elems, singleton)
 import Data.Monoid ((<>))
-import Web.Spock.Safe hiding (head)
-import System.IO
-import Control.Monad.Trans
-import Control.Concurrent
-import Blaze.ByteString.Builder.Char.Utf8
-import Network.Wai.Middleware.Cors
+import Data.Time.Clock (UTCTime)
+import GHC.Generics (Generic)
+import Network.Wai.Middleware.Cors (simpleCors)
 import System.Directory
 import System.FilePath
-import qualified Data.ByteString as B
-import Data.HashMap.Strict (elems, singleton)
-import GHC.Generics (Generic)
-import Data.Aeson (ToJSON)
-import Data.Time.Clock (UTCTime)
+import System.IO
+import System.Process
+
+import Web.Spock.Safe hiding (head)
 
 main :: IO ()
 main = do
@@ -33,6 +37,11 @@ main = do
             lift $ copyFile tempLocation path
             text "ok"
 
+        delete "fs/file" $ do
+            path <- param' "path"
+            lift $ removeFile path
+            text "ok"
+
         get "fs/dir" $ do
             path <- param' "path"
             contents <- lift $ getDirectoryContents path
@@ -44,22 +53,29 @@ main = do
             lift $ createDirectoryIfMissing True path
             text "ok"
 
+        delete "fs/dir" $ do
+            path <- param' "path"
+            lift $ removeDirectory path
+            text "ok"
+
         get ("fs/sp-dir" <//> var) $ \name -> do
             dir <- lift $ getSpecialDirectory name
             json [dir]
 
-        get root $ do
-            stream $ \send flush -> do
-                h <- openFile "stack.yaml" ReadMode
-                slowRead h $ \c -> do
+        post "proc" $ do
+            exe <- param' "exe"
+            args' <- LB.pack <$> param' "args"
+            let (Just args) = decode args'
+            (_, Just hout, _, _) <- lift $ createProcess (proc exe args) { std_out = CreatePipe }
+            stream $ \send flush ->
+                forEachChar hout $ \c -> do
                     send (fromChar c)
                     flush
-                    threadDelay 500000
 
 getSpecialDirectory :: String -> IO FilePath
 getSpecialDirectory "Documents" = getUserDocumentsDirectory
 getSpecialDirectory "Temporary" = getTemporaryDirectory
-getSpecialDirectory "AppData"   = getAppUserDataDirectory "app" >>= return .takeDirectory
+getSpecialDirectory "AppData"   = takeDirectory <$> getAppUserDataDirectory "app"
 
 -- FIXME handle exception
 getFileStat dir fn = do
@@ -76,8 +92,6 @@ data File = File { fileType :: String
                  } deriving (Show, Generic)
 instance ToJSON File
 
-slowRead h f = do
+forEachChar h f = do
     eof <- hIsEOF h
-    if eof
-       then return ()
-       else hGetChar h >>= f >> slowRead h f
+    unless eof $ hGetChar h >>= f >> forEachChar h f
