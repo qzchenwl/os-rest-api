@@ -5,7 +5,7 @@ module Main where
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy.Char8 as LB
 
-import Blaze.ByteString.Builder.Char.Utf8 (fromChar)
+import Blaze.ByteString.Builder (fromByteString)
 import Control.Monad (unless)
 import Control.Monad.Trans (lift)
 import Data.Aeson (ToJSON, decode)
@@ -16,14 +16,13 @@ import GHC.Generics (Generic)
 import Network.Wai.Middleware.Cors (simpleCors)
 import System.Directory
 import System.FilePath
-import System.IO
 import System.Process
 
 import Web.Spock.Safe hiding (head)
 
 main :: IO ()
 main = do
-    runSpock 8080 $ spockT id $ do
+    runSpock 8888 $ spockT id $ do
         middleware simpleCors
 
         get "fs/file" $ do
@@ -68,8 +67,8 @@ main = do
             let (Just args) = decode args'
             (_, Just hout, _, _) <- lift $ createProcess (proc exe args) { std_out = CreatePipe }
             stream $ \send flush ->
-                forEachChar hout $ \c -> do
-                    send (fromChar c)
+                forEachBS hout $ \bs -> do
+                    send (fromByteString bs)
                     flush
 
 getSpecialDirectory :: String -> IO FilePath
@@ -92,6 +91,6 @@ data File = File { fileType :: String
                  } deriving (Show, Generic)
 instance ToJSON File
 
-forEachChar h f = do
-    eof <- hIsEOF h
-    unless eof $ hGetChar h >>= f >> forEachChar h f
+forEachBS h f = do
+    bs <- B.hGet h 1
+    unless (B.null bs) $ f bs >> forEachBS h f
