@@ -23,8 +23,8 @@ main = do
         middleware simpleCors
 
         get "fs/file" $ do
-            file <- param' "file"
-            content <- lift $ B.readFile file
+            path <- param' "path"
+            content <- lift $ B.readFile path
             bytes content
 
         post "fs/file" $ do
@@ -34,14 +34,14 @@ main = do
             text "ok"
 
         get "fs/dir" $ do
-            dir <- param' "dir"
-            contents <- lift $ getDirectoryContents dir
-            files <- lift $ mapM (getFileStat dir) (filter (\fn -> fn /= "." && fn /= "..") contents)
+            path <- param' "path"
+            contents <- lift $ getDirectoryContents path
+            files <- lift $ mapM (getFileStat path) (filter (\fn -> fn /= "." && fn /= "..") contents)
             json files
 
         post "fs/dir" $ do
-            dir <- param' "dir"
-            lift $ createDirectoryIfMissing True dir
+            path <- param' "path"
+            lift $ createDirectoryIfMissing True path
             text "ok"
 
         get ("fs/sp-dir" <//> var) $ \name -> do
