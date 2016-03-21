@@ -19,3 +19,7 @@ executable os-rest-api
   build-depends:       base >= 4.7 && < 5
                      , Spock
                      , blaze-builder
+                     , wai-cors
+                     , directory
+                     , filepath
+                     , mtl
