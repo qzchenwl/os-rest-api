@@ -1,28 +1,29 @@
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
+
 module Main where
 
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy.Char8 as LB
+import qualified Data.ByteString             as B
+import qualified Data.ByteString.Lazy.Char8  as LB
 
-import Blaze.ByteString.Builder (fromByteString)
-import Control.Monad (unless)
-import Control.Monad.Trans (lift)
-import Data.Aeson (ToJSON, decode)
-import Data.HashMap.Strict (elems, singleton)
-import Data.Monoid ((<>))
-import Data.Time.Clock (UTCTime)
-import GHC.Generics (Generic)
-import Network.Wai.Middleware.Cors (simpleCors)
-import System.Directory
-import System.FilePath
-import System.Process
+import           Blaze.ByteString.Builder    (fromByteString)
+import           Control.Monad               (unless)
+import           Control.Monad.Trans         (lift)
+import           Data.Aeson                  (ToJSON, decode)
+import           Data.HashMap.Strict         (elems, singleton)
+import           Data.Monoid                 ((<>))
+import           Data.Time.Clock             (UTCTime)
+import           GHC.Generics                (Generic)
+import           Network.Wai.Middleware.Cors (simpleCors)
+import           System.Directory
+import           System.FilePath
+import           System.Process
 
-import Web.Spock.Safe hiding (head)
-import Platform
+import           Platform
+import           Web.Spock.Safe              hiding (head)
 
 main :: IO ()
-main = do
+main =
     runSpock 8888 $ spockT id $ do
         middleware simpleCors
 
@@ -98,8 +99,8 @@ getFileStat dir fn = do
      in return (File ft fn modified (dir </> fn))
 
 
-data File = File { fileType :: String
-                 , fileName :: String
+data File = File { fileType     :: String
+                 , fileName     :: String
                  , lastModified :: UTCTime
                  , absolutePath :: FilePath
                  } deriving (Show, Generic)
