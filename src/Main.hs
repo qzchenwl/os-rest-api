@@ -60,6 +60,9 @@ main = do
         get ("fs/sp-dir" <//> var) $ \name -> do
             dir <- lift $ getSpecialDirectory name
             json [dir]
+        get ("fs/exe" <//> var) $ \name -> do
+            (Just path) <- lift $ findExecutable name
+            json [path]
 
         post "proc" $ do
             exe <- param' "exe"
