@@ -28,3 +28,4 @@ executable os-rest-api
                      , aeson
                      , time
                      , process
+                     , Win32
