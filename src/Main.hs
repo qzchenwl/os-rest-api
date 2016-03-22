@@ -17,9 +17,9 @@ import Network.Wai.Middleware.Cors (simpleCors)
 import System.Directory
 import System.FilePath
 import System.Process
-import System.Win32.Registry
 
 import Web.Spock.Safe hiding (head)
+import Platform
 
 main :: IO ()
 main = do
@@ -61,6 +61,7 @@ main = do
         get ("fs/sp-dir" <//> var) $ \name -> do
             dir <- lift $ getSpecialDirectory name
             json [dir]
+
         get ("fs/exe" <//> var) $ \name -> do
             (Just path) <- lift $ findExecutable name
             json [path]
@@ -68,10 +69,11 @@ main = do
         get ("fs/exe" <//> var) $ \name -> do
             (Just path) <- lift $ findExecutable name
             json [path]
+
         get "reg/HKLM" $ do
             subkey <- param' "subkey"
-            hkey <- lift $ regCreateKey hKEY_LOCAL_MACHINE subkey
-            text "ok"
+            kvs <- lift $ getReg "HKLM" subkey
+            json kvs
 
         post "proc" $ do
             exe <- param' "exe"
