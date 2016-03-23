@@ -1,5 +1,6 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric       #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
@@ -7,16 +8,17 @@ import qualified Data.ByteString             as B
 import qualified Data.ByteString.Lazy.Char8  as LB
 
 import           Blaze.ByteString.Builder    (fromByteString)
-import           Control.Monad               (unless)
+import           Control.Monad               (unless, void, when)
 import           Control.Monad.Trans         (lift)
 import           Data.Aeson                  (ToJSON, decode)
-import           Data.HashMap.Strict         (elems, singleton)
+import           Data.HashMap.Strict         (elems)
 import           Data.Monoid                 ((<>))
 import           Data.Time.Clock             (UTCTime)
 import           GHC.Generics                (Generic)
 import           Network.Wai.Middleware.Cors (simpleCors)
 import           System.Directory
 import           System.Environment
+import           System.Exit
 import           System.FilePath
 import           System.Process
 import           Web.Spock.Safe              hiding (head)
@@ -24,8 +26,11 @@ import           Web.Spock.Safe              hiding (head)
 import           Platform
 
 main :: IO ()
-main =
-    runSpock 8888 $ spockT id $ do
+main = startServer 8888
+
+startServer :: Int -> IO ()
+startServer port =
+    runSpock port $ spockT id $ do
         middleware simpleCors
 
         get "fs/file" $ do
@@ -86,6 +91,11 @@ main =
                 forEachBS hout $ \bs -> do
                     send (fromByteString bs)
                     flush
+        post "exit" $ do
+            (secret :: String) <- param' "secret"
+            when (secret == "3387") (void (lift exitSuccess))
+            when (secret == "7833") (void (lift exitFailure))
+            return ()
 
 getSpecialDirectory :: String -> IO FilePath
 getSpecialDirectory "Documents" = getUserDocumentsDirectory
