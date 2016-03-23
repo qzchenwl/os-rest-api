@@ -16,11 +16,12 @@ import           Data.Time.Clock             (UTCTime)
 import           GHC.Generics                (Generic)
 import           Network.Wai.Middleware.Cors (simpleCors)
 import           System.Directory
+import           System.Environment
 import           System.FilePath
 import           System.Process
+import           Web.Spock.Safe              hiding (head)
 
 import           Platform
-import           Web.Spock.Safe              hiding (head)
 
 main :: IO ()
 main =
@@ -63,8 +64,8 @@ main =
             dir <- lift $ getSpecialDirectory name
             json [dir]
 
-        get ("fs/exe" <//> var) $ \name -> do
-            (Just path) <- lift $ findExecutable name
+        get "fs/exe" $ do
+            path <- lift getExecutablePath
             json [path]
 
         get ("fs/exe" <//> var) $ \name -> do
