@@ -26,6 +26,7 @@ executable os-rest-api
                      , Spock
                      , blaze-builder
                      , wai-cors
+                     , wai-extra
                      , directory
                      , filepath
                      , mtl

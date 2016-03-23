@@ -4,24 +4,25 @@
 
 module Main where
 
-import qualified Data.ByteString             as B
-import qualified Data.ByteString.Lazy.Char8  as LB
+import qualified Data.ByteString                      as B
+import qualified Data.ByteString.Lazy.Char8           as LB
 
-import           Blaze.ByteString.Builder    (fromByteString)
-import           Control.Monad               (unless, void, when)
-import           Control.Monad.Trans         (lift)
-import           Data.Aeson                  (ToJSON, decode)
-import           Data.HashMap.Strict         (elems)
-import           Data.Monoid                 ((<>))
-import           Data.Time.Clock             (UTCTime)
-import           GHC.Generics                (Generic)
-import           Network.Wai.Middleware.Cors (simpleCors)
+import           Blaze.ByteString.Builder             (fromByteString)
+import           Control.Monad                        (unless, void, when)
+import           Control.Monad.Trans                  (lift)
+import           Data.Aeson                           (ToJSON, decode)
+import           Data.HashMap.Strict                  (elems)
+import           Data.Monoid                          ((<>))
+import           Data.Time.Clock                      (UTCTime)
+import           GHC.Generics                         (Generic)
+import           Network.Wai.Middleware.Cors          (simpleCors)
+import           Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
 import           System.Directory
 import           System.Environment
 import           System.Exit
 import           System.FilePath
 import           System.Process
-import           Web.Spock.Safe              hiding (head)
+import           Web.Spock.Safe                       hiding (head)
 
 import           Platform
 
@@ -32,6 +33,8 @@ startServer :: Int -> IO ()
 startServer port =
     runSpock port $ spockT id $ do
         middleware simpleCors
+        middleware logStdout
+        middleware logStdoutDev
 
         get "fs/file" $ do
             path <- param' "path"
